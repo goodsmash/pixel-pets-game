@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Pets 3D - Advanced</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        #pet-canvas, #battle-canvas {
+            width: 100%;
+            height: 300px;
+            border-radius: 0.375rem;
+            background-color: #f3f4f6;
+            cursor: grab;
+        }
+        #battle-canvas {
+             height: 400px; /* Taller canvas for battle */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4">
+        <h1 class="text-4xl font-bold text-center mb-8">Pixel Pets 3D - Advanced</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Left Column -->
+            <div class="flex flex-col gap-8">
+                <!-- Pet Generation -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold mb-4">Generate a New Pet</h2>
+                    <input type="text" id="pet-seed" class="w-full p-2 border border-gray-300 rounded-md mb-4" placeholder="Enter a word or phrase to seed your pet">
+                    <button id="generate-pet" class="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Generate</button>
+
+                    <div id="pet-display" class="mt-6 hidden">
+                        <h3 class="text-xl font-bold mb-2">Your New Pixel Pet</h3>
+                        <div id="canvas-container" class="relative">
+                            <canvas id="pet-canvas"></canvas>
+                        </div>
+                        <div class="mb-2 mt-4">
+                            <div class="flex justify-between items-center">
+                                <p class="font-semibold text-sm">Full Hash:</p>
+                                <button id="copy-hash-btn" class="text-sm bg-gray-200 px-2 py-1 rounded-md hover:bg-gray-300">Copy</button>
+                            </div>
+                            <p id="pet-hash" class="text-xs text-gray-600 break-all"></p>
+                        </div>
+                        <div id="pet-stats" class="grid grid-cols-3 gap-2 text-center mb-4"></div>
+                        <div id="pet-attributes" class="grid grid-cols-2 gap-2 text-sm mb-4"></div>
+                    </div>
+                </div>
+
+                <!-- Equipment and Inventory -->
+                 <div id="inventory-section" class="bg-white p-6 rounded-lg shadow-md hidden">
+                    <h2 class="text-2xl font-bold mb-4">Inventory & Equipment</h2>
+                     <div class="mt-4">
+                         <h4 class="text-lg font-semibold">Equipped Item</h4>
+                         <div id="pet-equipped-item" class="text-sm bg-gray-100 p-2 rounded-md min-h-[2.5rem]">No item equipped.</div>
+                     </div>
+                     <div class="mt-2">
+                         <h4 class="text-lg font-semibold">Inventory</h4>
+                         <div id="pet-inventory" class="text-sm bg-gray-100 p-2 rounded-md min-h-[4rem]"></div>
+                     </div>
+                 </div>
+
+                 <!-- Export and Import -->
+                 <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold mb-4">Export & Import Pet</h2>
+                    <p class="text-sm text-gray-600 mb-4">Save your pet's data to a file or load one from your computer.</p>
+                    <button id="export-pet-btn" class="w-full bg-green-500 text-white p-2 rounded-md hover:bg-green-600 mb-2" disabled>Export Active Pet (JSON)</button>
+                    <input type="file" id="import-pet-input" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                    <button id="import-pet-btn" class="w-full bg-purple-500 text-white p-2 rounded-md hover:bg-purple-600 mt-2">Import Pet</button>
+                 </div>
+            </div>
+
+            <!-- Right Column (Battle Arena) -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-2xl font-bold mb-4">Battle Arena</h2>
+                <div id="battle-display" class="text-center">
+                    <p>Generate or load a pet to start a battle!</p>
+                </div>
+                 <!-- New Challenge Section -->
+                <div id="challenge-section" class="mt-6 border-t pt-4">
+                     <h3 class="text-xl font-bold mb-2">Challenge a Friend's Pet</h3>
+                     <p class="text-sm text-gray-600 mb-2">Paste the hash of another saved pet to battle it.</p>
+                     <input type="text" id="opponent-hash-input" class="w-full p-2 border border-gray-300 rounded-md mb-2" placeholder="Enter opponent's hash code">
+                     <button id="challenge-friend-btn" class="w-full bg-yellow-500 text-black p-2 rounded-md hover:bg-yellow-600">Challenge Pet</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Saved Pets -->
+        <div class="mt-8 bg-white p-6 rounded-lg shadow-md">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">My Pets Collection</h2>
+                <button id="clear-pets-btn" class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600">Clear All Pets</button>
+            </div>
+            <div id="saved-pets-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                <!-- Saved pets will be appended here -->
+            </div>
+        </div>
+         <!-- Lua Export Section -->
+         <div id="lua-export-section" class="mt-8 bg-white p-6 rounded-lg shadow-md hidden">
+             <div class="flex justify-between items-center mb-1">
+                 <h2 class="text-2xl font-bold">Roblox (Lua) Export</h2>
+                  <button id="copy-lua-btn" class="text-sm bg-gray-200 px-2 py-1 rounded-md hover:bg-gray-300">Copy</button>
+             </div>
+             <pre class="bg-gray-800 text-white text-sm p-2 rounded-md h-48 overflow-y-auto"><code id="lua-script"></code></pre>
+         </div>
+    </div>
+
+    <script>
+        // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+        // 3D Setup
+        // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+        let mainScene, mainCamera, mainRenderer, petModel;
+        let battleScene, battleCamera, battleRenderer, playerPetModel, opponentPetModel;
+
+        function initMain3D() {
+            const canvas = document.getElementById('pet-canvas');
+            mainScene = new THREE.Scene();
+            mainCamera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+            mainCamera.position.z = 5;
+            mainRenderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+            mainRenderer.setSize(canvas.clientWidth, canvas.clientHeight);
+            mainRenderer.setPixelRatio(window.devicePixelRatio);
+            
+            addLights(mainScene);
+            setupMouseControls(canvas, () => petModel);
+        }
+
+        function initBattle3D(canvas) {
+             battleScene = new THREE.Scene();
+             battleCamera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+             battleCamera.position.z = 8;
+             battleRenderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+             battleRenderer.setSize(canvas.clientWidth, canvas.clientHeight);
+             battleRenderer.setPixelRatio(window.devicePixelRatio);
+             addLights(battleScene);
+             setupMouseControls(canvas, () => battleScene); // Control the whole scene
+        }
+
+        function addLights(scene) {
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.9);
+            directionalLight.position.set(5, 10, 7.5);
+            scene.add(directionalLight);
+        }
+        
+        function createPetModel(hash) {
+            const modelGroup = new THREE.Group();
+            const val = (s, e) => parseInt(hash.substring(s, e), 16);
+
+            const bodyColor = new THREE.Color().setHSL(val(0, 2) / 255, 0.7, 0.5);
+            const bodyShape = val(2, 4) % 4; // Added Torus
+            let bodyGeometry;
+            switch(bodyShape) {
+                case 0: bodyGeometry = new THREE.BoxGeometry(2, 2, 2); break;
+                case 1: bodyGeometry = new THREE.SphereGeometry(1.2, 32, 32); break;
+                case 2: bodyGeometry = new THREE.ConeGeometry(1.2, 2.2, 32); break;
+                case 3: bodyGeometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16); break;
+            }
+            const bodyMaterial = new THREE.MeshStandardMaterial({ color: bodyColor, roughness: 0.5, metalness: 0.2 });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            modelGroup.add(body);
+
+            const eyeColor = new THREE.Color().setHSL(val(4, 6) / 255, 1.0, 0.5);
+            const eyeGeometry = new THREE.SphereGeometry(0.2, 16, 16);
+            const eyeMaterial = new THREE.MeshBasicMaterial({ color: eyeColor });
+            
+            const eyeDist = bodyShape === 1 ? 1.1 : 1.0;
+            const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            leftEye.position.set(-0.5, 0.4, eyeDist);
+            modelGroup.add(leftEye);
+
+            const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            rightEye.position.set(0.5, 0.4, eyeDist);
+            modelGroup.add(rightEye);
+
+            if (val(6, 8) > 100) {
+                const hornColor = new THREE.Color().setHSL(val(8, 10) / 255, 0.6, 0.7);
+                const hornGeometry = new THREE.ConeGeometry(0.3, 1, 16);
+                const hornMaterial = new THREE.MeshStandardMaterial({ color: hornColor, roughness: 0.8 });
+                const horn = new THREE.Mesh(hornGeometry, hornMaterial);
+                horn.position.set(0, body.geometry.parameters.height ? body.geometry.parameters.height / 2 + 0.5 : 1.5, 0);
+                horn.rotation.x = -Math.PI / 12;
+                modelGroup.add(horn);
+            }
+            return modelGroup;
+        }
+
+        function setupMouseControls(canvas, getTarget) {
+             let isDragging = false;
+             let previousMousePosition = { x: 0, y: 0 };
+
+             const onMouseDown = (e) => { isDragging = true; previousMousePosition = {x: e.clientX, y: e.clientY }; };
+             const onMouseUp = () => { isDragging = false; };
+             const onMouseMove = (e) => {
+                 if (!isDragging) return;
+                 const target = getTarget();
+                 if (!target) return;
+
+                 const deltaMove = {
+                     x: e.clientX - previousMousePosition.x,
+                     y: e.clientY - previousMousePosition.y
+                 };
+                 target.rotation.y += deltaMove.x * 0.005;
+                 target.rotation.x += deltaMove.y * 0.005;
+                 previousMousePosition = { x: e.clientX, y: e.clientY };
+             };
+             
+             canvas.addEventListener('mousedown', onMouseDown);
+             window.addEventListener('mouseup', onMouseUp);
+             window.addEventListener('mousemove', onMouseMove);
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            if (mainRenderer) mainRenderer.render(mainScene, mainCamera);
+            if (battleRenderer) battleRenderer.render(battleScene, battleCamera);
+        }
+
+        // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+        // Game Logic & Data
+        // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+        const DB_NAME = 'pixel_pets_3d_advanced';
+        const attributePools = {
+            colors: ['Red', 'Blue', 'Green', 'Yellow', 'Purple', 'Orange', 'Black', 'White', 'Pink', 'Brown'], sizes: ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gigantic'], features: ['Furry', 'Slimy', 'Scaly', 'Feathered', 'Smooth', 'Rough'], eyeShapes: ['Round', 'Almond', 'Slit', 'Beady', 'Oval'], earTypes: ['Pointy', 'Floppy', 'Round', 'Cat-like', 'None'], tailTypes: ['Long', 'Short', 'Bushy', 'Thin', 'None'], specialAbilities: ['Flying', 'Invisibility', 'Teleportation', 'Super Strength', 'Healing'], personalities: ['Brave', 'Timid', 'Curious', 'Lazy', 'Aggressive'], habitats: ['Forest', 'Mountain', 'Ocean', 'Desert', 'City'], attackTypes: ['Fire', 'Water', 'Earth', 'Air', 'Magic'], defenseMechanisms: ['Shield', 'Dodge', 'Absorb', 'Reflect', 'Burrow'], rarities: ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary'], wingTypes: ['Feathery', 'Bat-like', 'Insectoid', 'None'], hornTypes: ['Curved', 'Straight', 'Ram-like', 'None'], bodyShapes: ['Bipedal', 'Quadrupedal', 'Serpentine', 'Amorphous'], skinPatterns: ['Striped', 'Spotted', 'Solid', 'Marbled'], elementalAffinities: ['Fire', 'Water', 'Earth', 'Air', 'Light', 'Dark'], sounds: ['Roar', 'Chirp', 'Hiss', 'Growl'], diets: ['Carnivore', 'Herbivore', 'Omnivore'], socialBehaviors: ['Solitary', 'Pack Animal', 'Herd Animal']
+        };
+        const lootPools = {
+            adjectives: ['Glowing', 'Ancient', 'Rusty', 'Mystic', 'Broken', 'Powerful', 'Shiny'],
+            nouns: ['Shard', 'Gem', 'Tome', 'Key', 'Pendant', 'Ring', 'Figurine'],
+            effects: [
+                { id: 1, type: 'stat_boost', stat: 'attack', value: 2, description: '+2 Attack' },
+                { id: 2, type: 'stat_boost', stat: 'defense', value: 3, description: '+3 Defense' },
+                { id: 3, type: 'stat_boost', stat: 'hp', value: 10, description: '+10 HP' },
+                { id: 4, type: 'special', description: 'Grants a one-time ability' },
+                { id: 5, type: 'none', description: 'Has no discernible effect' }
+            ]
+        };
+        const elementalAdvantages = { 'Fire': 'Earth', 'Water': 'Fire', 'Earth': 'Air', 'Air': 'Water', 'Magic': 'Magic' };
+        let activePet = null;
+
+        // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+        // Core Functions (Pet Creation, Display)
+        // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+        async function generatePet(seed) {
+            const hash = await sha256(seed);
+            const pet = {
+                seed: seed, hash: hash, attributes: {}, stats: {}, inventory: [], equippedItem: null,
+                image: `https://robohash.org/${hash}.png?set=set4&size=96x96`
+            };
+            
+            let attrIndex = 0;
+            for (const poolName in attributePools) {
+                const pool = attributePools[poolName];
+                const hashSlice = hash.substring(attrIndex * 2, (attrIndex * 2) + 2);
+                pet.attributes[poolName] = pool[parseInt(hashSlice, 16) % pool.length];
+                attrIndex++;
+            }
+            
+            pet.stats.hp = 80 + (parseInt(hash.substring(50, 52), 16) % 41);
+            pet.stats.attack = 10 + (parseInt(hash.substring(52, 54), 16) % 11);
+            pet.stats.defense = 5 + (parseInt(hash.substring(54, 56), 16) % 11);
+            
+            await savePet(pet);
+            setActivePet(pet);
+            loadSavedPets();
+            setupRandomBattle(pet);
+        }
+
+        function setActivePet(pet) {
+            activePet = pet;
+            
+            const petDisplay = document.getElementById('pet-display');
+            petDisplay.classList.remove('hidden');
+            document.getElementById('inventory-section').classList.remove('hidden');
+            document.getElementById('lua-export-section').classList.remove('hidden');
+            document.getElementById('export-pet-btn').disabled = false;
+
+            if (petModel) mainScene.remove(petModel);
+            petModel = createPetModel(pet.hash);
+            mainScene.add(petModel);
+
+            document.getElementById('pet-hash').textContent = pet.hash;
+            displayStats(pet);
+            displayAttributes(pet);
+            displayInventory(pet);
+            displayEquippedItem(pet);
+            document.getElementById('lua-script').textContent = generateLuaScript(pet);
+            document.getElementById('pet-seed').value = pet.seed;
+        }
+
+        // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+        // Display Functions
+        // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+         function displayStats(pet) {
+            const stats = getPetEffectiveStats(pet);
+            const baseStats = pet.stats;
+            const statsContainer = document.getElementById('pet-stats');
+            const statHtml = (name, base, effective) => {
+                const bonus = effective - base;
+                const bonusHtml = bonus > 0 ? `<span class="text-green-500">(+${bonus})</span>` : '';
+                return `<div><span class="font-semibold">${name.toUpperCase()}:</span> ${effective} ${bonusHtml}</div>`;
+            };
+            statsContainer.innerHTML = `${statHtml('hp', baseStats.hp, stats.hp)} ${statHtml('attack', baseStats.attack, stats.attack)} ${statHtml('defense', baseStats.defense, stats.defense)}`;
+        }
+
+        function displayAttributes(pet) {
+            const container = document.getElementById('pet-attributes');
+            container.innerHTML = Object.entries(pet.attributes).map(([attr, value]) => {
+                const formattedName = attr.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                return `<div><span class="font-semibold">${formattedName}:</span> ${value}</div>`;
+            }).join('');
+        }
+        
+        function displayInventory(pet) {
+            const container = document.getElementById('pet-inventory');
+            container.innerHTML = pet.inventory.length > 0 ? pet.inventory.map((item, index) =>
+                `<div class="flex justify-between items-center p-1"><span>${item.name} (${item.effect.description})</span>
+                 <button class="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600" onclick="equipItem(${index})">Equip</button></div>`
+            ).join('') : 'No items yet.';
+        }
+
+        function displayEquippedItem(pet) {
+            const container = document.getElementById('pet-equipped-item');
+            container.innerHTML = pet.equippedItem ? 
+                `<div class="flex justify-between items-center"><span>${pet.equippedItem.name} (${pet.equippedItem.effect.description})</span>
+                 <button class="text-xs bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600" onclick="unequipItem()">Unequip</button></div>`
+                : 'No item equipped.';
+        }
+
+        // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+        // Equipment & Item Logic
+        // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+        async function equipItem(itemIndex) {
+            if (!activePet || itemIndex >= activePet.inventory.length) return;
+            if (activePet.equippedItem) activePet.inventory.push(activePet.equippedItem);
+            activePet.equippedItem = activePet.inventory.splice(itemIndex, 1)[0];
+            await savePet(activePet);
+            setActivePet(activePet);
+        }
+
+        async function unequipItem() {
+            if (!activePet || !activePet.equippedItem) return;
+            activePet.inventory.push(activePet.equippedItem);
+            activePet.equippedItem = null;
+            await savePet(activePet);
+            setActivePet(activePet);
+        }
+        
+        const getPetEffectiveStats = (pet) => {
+            const effectiveStats = { ...pet.stats };
+            if (pet.equippedItem?.effect.type === 'stat_boost') {
+                const { stat, value } = pet.equippedItem.effect;
+                if (effectiveStats[stat] !== undefined) effectiveStats[stat] += value;
+            }
+            return effectiveStats;
+        };
+
+        // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+        // Battle System
+        // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+        async function setupRandomBattle(playerPet) {
+            const opponentSeed = `opponent-${Date.now()}`;
+            const opponentHash = await sha256(opponentSeed);
+            const opponentPet = {
+                seed: "Wild Pet", hash: opponentHash, attributes: {}, stats: {}, inventory: [], equippedItem: null
+            };
+            let attrIndex = 0;
+            for (const poolName in attributePools) {
+                opponentPet.attributes[poolName] = attributePools[poolName][parseInt(opponentHash.substring(attrIndex * 2, (attrIndex * 2) + 2), 16) % attributePools[poolName].length];
+                attrIndex++;
+            }
+            opponentPet.stats.hp = 80 + (parseInt(opponentHash.substring(50, 52), 16) % 41);
+            opponentPet.stats.attack = 10 + (parseInt(opponentHash.substring(52, 54), 16) % 11);
+            opponentPet.stats.defense = 5 + (parseInt(opponentHash.substring(54, 56), 16) % 11);
+            
+            // Do not save wild pets
+            renderBattleUI(playerPet, opponentPet, false);
+        }
+
+        function renderBattleUI(player, opponent, isFriendChallenge) {
+            const battleDisplay = document.getElementById('battle-display');
+            const playerStats = getPetEffectiveStats(player);
+            const opponentStats = getPetEffectiveStats(opponent);
+
+            battleDisplay.innerHTML = `
+                <div id="battle-canvas-container" class="relative mb-4">
+                     <canvas id="battle-canvas"></canvas>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-left text-sm">
+                    <div class="border-r pr-2">
+                        <h4 class="font-bold truncate">${player.seed}</h4>
+                        <p>HP: ${playerStats.hp} | Atk: ${playerStats.attack} | Def: ${playerStats.defense}</p>
+                        <p>Type: ${player.attributes.attackTypes}</p>
+                    </div>
+                    <div>
+                        <h4 class="font-bold truncate">${opponent.seed}</h4>
+                        <p>HP: ${opponentStats.hp} | Atk: ${opponentStats.attack} | Def: ${opponentStats.defense}</p>
+                        <p>Type: ${opponent.attributes.attackTypes}</p>
+                    </div>
+                </div>
+                <button id="start-battle" class="bg-red-500 text-white p-2 rounded-md mt-4 hover:bg-red-600">Start Battle</button>
+                <div id="battle-log" class="mt-4 text-left bg-gray-200 p-2 rounded-md h-40 overflow-y-auto"></div>
+            `;
+            
+            const battleCanvas = document.getElementById('battle-canvas');
+            initBattle3D(battleCanvas);
+
+            if(playerPetModel) battleScene.remove(playerPetModel);
+            playerPetModel = createPetModel(player.hash);
+            playerPetModel.position.x = -2.5;
+            battleScene.add(playerPetModel);
+
+            if(opponentPetModel) battleScene.remove(opponentPetModel);
+            opponentPetModel = createPetModel(opponent.hash);
+            opponentPetModel.position.x = 2.5;
+            battleScene.add(opponentPetModel);
+
+            document.getElementById('start-battle').addEventListener('click', () => {
+                startBattle(player, opponent, isFriendChallenge);
+            }, { once: true });
+        }
+        
+        async function startBattle(player, opponent, wasFriendChallenge) {
+            const battleLog = document.getElementById('battle-log');
+            battleLog.innerHTML = '';
+            
+            let playerStats = getPetEffectiveStats(player);
+            let opponentStats = getPetEffectiveStats(opponent);
+            let playerHp = playerStats.hp;
+            let opponentHp = opponentStats.hp;
+            let turn = 1;
+
+            const log = (msg) => { battleLog.innerHTML += `<p>${msg}</p>`; battleLog.scrollTop = battleLog.scrollHeight; };
+            log("The battle begins!");
+
+            while (playerHp > 0 && opponentHp > 0) {
+                log(`--- Turn ${turn} ---`);
+                
+                let playerDamage = Math.max(1, Math.floor(playerStats.attack * (elementalAdvantages[player.attributes.attackTypes] === opponent.attributes.attackTypes ? 1.5 : 1) - opponentStats.defense / 2));
+                opponentHp -= playerDamage;
+                log(`${player.seed} deals <span class="text-red-600 font-semibold">${playerDamage}</span> dmg. Opponent HP: ${Math.max(0, opponentHp)}`);
+                if (opponentHp <= 0) break;
+                
+                let opponentDamage = Math.max(1, Math.floor(opponentStats.attack * (elementalAdvantages[opponent.attributes.attackTypes] === player.attributes.attackTypes ? 1.5 : 1) - playerStats.defense / 2));
+                playerHp -= opponentDamage;
+                log(`${opponent.seed} deals <span class="text-red-600 font-semibold">${opponentDamage}</span> dmg. Your HP: ${Math.max(0, playerHp)}`);
+
+                turn++;
+            }
+            
+            log(`--- Battle Over ---`);
+            if (playerHp > 0) {
+                log(`<span class="text-green-500 font-bold">${player.seed} is victorious!</span>`);
+                const loot = await generateLoot(opponent.hash);
+                log(`Found loot: <span class="font-semibold">${loot.name}</span>!`);
+                activePet.inventory.push(loot);
+                await savePet(activePet);
+                setActivePet(activePet);
+            } else {
+                log(`<span class="text-red-500 font-bold">${player.seed} was defeated!</span>`);
+            }
+            // After battle, if it was a random one, set up a new one
+            if(!wasFriendChallenge) {
+                setTimeout(() => setupRandomBattle(player), 2000);
+            }
+        }
+
+        const generateLoot = async (hash) => ({
+            name: `${lootPools.adjectives[parseInt(hash.substring(10, 12), 16) % lootPools.adjectives.length]} ${lootPools.nouns[parseInt(hash.substring(12, 14), 16) % lootPools.nouns.length]}`,
+            effect: lootPools.effects[parseInt(hash.substring(14, 16), 16) % lootPools.effects.length]
+        });
+
+        // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+        // Persistence (Save/Load/Import/Export)
+        // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+        async function savePet(petToSave) {
+            let savedPets = await getSavedPets();
+            const petIndex = savedPets.findIndex(p => p.hash === petToSave.hash);
+            if (petIndex > -1) savedPets[petIndex] = petToSave;
+            else savedPets.push(petToSave);
+            localStorage.setItem(DB_NAME, JSON.stringify(savedPets));
+        }
+
+        const getSavedPets = async () => JSON.parse(localStorage.getItem(DB_NAME)) || [];
+
+        async function loadSavedPets() {
+            const savedPets = await getSavedPets();
+            const container = document.getElementById('saved-pets-container');
+            container.innerHTML = savedPets.length > 0 ? savedPets.map(pet => `
+                <div class="bg-gray-200 p-3 rounded-lg shadow flex flex-col items-center text-center">
+                    <img src="${pet.image}" alt="Pet" class="w-20 h-20 rounded-full mb-2 bg-gray-300">
+                    <h4 class="font-bold text-sm">${pet.seed}</h4>
+                    <p class="text-xs text-gray-600 break-all w-full my-1">${pet.hash}</p>
+                    <button class="mt-auto w-full bg-green-500 text-white text-sm p-1 rounded-md hover:bg-green-600" onclick="loadPetByHash('${pet.hash}')">Load</button>
+                </div>
+            `).join('') : '<p class="col-span-full text-center text-gray-500">No pets saved yet. Generate one to begin!</p>';
+        }
+        
+        async function loadPetByHash(hash) {
+            const savedPets = await getSavedPets();
+            const pet = savedPets.find(p => p.hash === hash);
+            if (pet) {
+                setActivePet(pet);
+                setupRandomBattle(pet);
+            }
+        }
+
+        function exportPet() {
+            if (!activePet) {
+                alert("Please generate or load a pet to export.");
+                return;
+            }
+            const petJSON = JSON.stringify(activePet, null, 2);
+            const blob = new Blob([petJSON], {type: "application/json"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${activePet.seed.replace(/\s+/g, '_')}_${activePet.hash.substring(0,6)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function importPet(event) {
+             const file = event.target.files[0];
+             if (!file) return;
+             const reader = new FileReader();
+             reader.onload = async (e) => {
+                 try {
+                     const pet = JSON.parse(e.target.result);
+                     // Basic validation
+                     if (pet.hash && pet.seed && pet.stats) {
+                         await savePet(pet);
+                         loadSavedPets();
+                         setActivePet(pet);
+                         alert(`Successfully imported ${pet.seed}!`);
+                     } else {
+                        alert("Invalid pet file format.");
+                     }
+                 } catch (err) {
+                     alert("Could not parse file. Make sure it's a valid pet JSON.");
+                     console.error(err);
+                 }
+             };
+             reader.readAsText(file);
+        }
+
+        async function challengeFriend() {
+            const opponentHash = document.getElementById('opponent-hash-input').value.trim();
+            if (!activePet) {
+                alert("You need an active pet to challenge someone!");
+                return;
+            }
+            if (!opponentHash) {
+                alert("Please enter the hash of the pet you want to challenge.");
+                return;
+            }
+            if (opponentHash === activePet.hash) {
+                 alert("A pet cannot battle itself!");
+                 return;
+            }
+
+            const savedPets = await getSavedPets();
+            const opponentPet = savedPets.find(p => p.hash === opponentHash);
+
+            if (opponentPet) {
+                 renderBattleUI(activePet, opponentPet, true);
+            } else {
+                alert("Could not find a pet with that hash in your saved collection.");
+            }
+        }
+
+
+        // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+        // Utility & Event Listeners
+        // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+        const sha256 = async (msg) => {
+            const buffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+            return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+        };
+        const copyToClipboard = (text, btn) => {
+            navigator.clipboard.writeText(text).then(() => {
+                const original = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(() => { btn.textContent = original; }, 2000);
+            }).catch(err => console.error('Copy failed: ', err));
+        };
+        const generateLuaScript = (pet) => {
+             let script = `local pet = {\n`;
+             script += `   seed = "${pet.seed}",\n   hash = "${pet.hash}",\n\n`;
+             script += `   base_stats = { hp = ${pet.stats.hp}, attack = ${pet.stats.attack}, defense = ${pet.stats.defense} },\n\n`;
+             script += `   equippedItem = ${pet.equippedItem ? `{ name = "${pet.equippedItem.name}", effect = "${pet.equippedItem.effect.description}" }` : 'nil'},\n\n`;
+             script += `   inventory = {\n` + pet.inventory.map(item => `      { name = "${item.name}", effect = "${item.effect.description}" }`).join(',\n') + `\n   },\n\n`;
+             script += `   attributes = {\n` + Object.entries(pet.attributes).map(([k,v]) => `      ${k} = "${v}"`).join(',\n') + `\n   }\n}\n\nreturn pet`;
+             return script;
+        };
+
+        // Event Listeners
+        document.getElementById('generate-pet').addEventListener('click', () => {
+            const seed = document.getElementById('pet-seed').value.trim();
+            if (seed) generatePet(seed);
+            else alert('Please enter a seed phrase for your pet.');
+        });
+        document.getElementById('export-pet-btn').addEventListener('click', exportPet);
+        document.getElementById('import-pet-input').addEventListener('change', importPet);
+        document.getElementById('import-pet-btn').addEventListener('click', () => document.getElementById('import-pet-input').click());
+        document.getElementById('challenge-friend-btn').addEventListener('click', challengeFriend);
+
+        document.getElementById('clear-pets-btn').addEventListener('click', () => {
+            if (confirm("Are you sure you want to delete ALL of your saved pets? This cannot be undone.")) {
+                localStorage.removeItem(DB_NAME);
+                location.reload();
+            }
+        });
+        
+        document.body.addEventListener('click', function(event) {
+            if (event.target.id === 'copy-hash-btn') copyToClipboard(document.getElementById('pet-hash').textContent, event.target);
+            if (event.target.id === 'copy-lua-btn') copyToClipboard(document.getElementById('lua-script').textContent, event.target);
+        });
+        
+        window.addEventListener('load', () => {
+            initMain3D();
+            animate();
+            loadSavedPets();
+            document.getElementById('battle-display').innerHTML = '<p>Generate or load a pet to start a battle!</p>';
+        });
+
+    </script>
+</body>
+</html>

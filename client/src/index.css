@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 240 10% 3.9%; /* #0F172A */
+  --foreground: 0 0% 98%; /* #FAFAFA */
+  --muted: 240 3.7% 15.9%; /* #1E293B */
+  --muted-foreground: 240 5% 64.9%; /* #64748B */
+  --popover: 240 10% 3.9%; /* #0F172A */
+  --popover-foreground: 0 0% 98%; /* #FAFAFA */
+  --card: 240 10% 3.9%; /* #0F172A */
+  --card-foreground: 0 0% 98%; /* #FAFAFA */
+  --border: 240 3.7% 15.9%; /* #1E293B */
+  --input: 240 3.7% 15.9%; /* #1E293B */
+  --primary: 263 70% 60%; /* #6366F1 */
+  --primary-foreground: 211 100% 99%; /* #F8FAFC */
+  --secondary: 240 3.7% 15.9%; /* #1E293B */
+  --secondary-foreground: 0 0% 98%; /* #FAFAFA */
+  --accent: 240 3.7% 15.9%; /* #1E293B */
+  --accent-foreground: 0 0% 98%; /* #FAFAFA */
+  --destructive: 0 62.8% 30.6%; /* #DC2626 */
+  --destructive-foreground: 0 0% 98%; /* #FAFAFA */
+  --ring: 240 4.9% 83.9%; /* #CBD5E1 */
+  --radius: 0.5rem;
+
+  /* Game-specific colors */
+  --game-primary: 263 70% 60%; /* #6366F1 */
+  --game-secondary: 189 84% 55%; /* #06B6D4 */
+  --game-accent: 45 93% 47%; /* #F59E0B */
+  --game-danger: 0 72% 51%; /* #EF4444 */
+  --game-success: 142 71% 45%; /* #10B981 */
+  --game-dark: 216 28% 26%; /* #374151 */
+  --game-medium: 215 25% 27%; /* #4B5563 */
+  --game-light: 210 20% 98%; /* #F9FAFB */
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+
+  .font-pixel {
+    font-family: "Press Start 2P", cursive;
+  }
+}
+
+@layer utilities {
+  /* Game-specific color utilities */
+  .text-game-primary { color: hsl(var(--game-primary)); }
+  .text-game-secondary { color: hsl(var(--game-secondary)); }
+  .text-game-accent { color: hsl(var(--game-accent)); }
+  .text-game-danger { color: hsl(var(--game-danger)); }
+  .text-game-success { color: hsl(var(--game-success)); }
+  .text-game-dark { color: hsl(var(--game-dark)); }
+  .text-game-medium { color: hsl(var(--game-medium)); }
+  .text-game-light { color: hsl(var(--game-light)); }
+
+  .bg-game-primary { background-color: hsl(var(--game-primary)); }
+  .bg-game-secondary { background-color: hsl(var(--game-secondary)); }
+  .bg-game-accent { background-color: hsl(var(--game-accent)); }
+  .bg-game-danger { background-color: hsl(var(--game-danger)); }
+  .bg-game-success { background-color: hsl(var(--game-success)); }
+  .bg-game-dark { background-color: hsl(var(--game-dark)); }
+  .bg-game-medium { background-color: hsl(var(--game-medium)); }
+  .bg-game-light { background-color: hsl(var(--game-light)); }
+
+  .border-game-primary { border-color: hsl(var(--game-primary)); }
+  .border-game-secondary { border-color: hsl(var(--game-secondary)); }
+  .border-game-accent { border-color: hsl(var(--game-accent)); }
+  .border-game-danger { border-color: hsl(var(--game-danger)); }
+  .border-game-success { border-color: hsl(var(--game-success)); }
+
+  /* Custom animations */
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  @keyframes glow {
+    from { box-shadow: 0 0 20px hsl(var(--game-primary)); }
+    to { box-shadow: 0 0 30px hsl(var(--game-secondary)); }
+  }
+
+  @keyframes bounce-slow {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-25%); }
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+
+  .animate-bounce-slow {
+    animation: bounce-slow 2s infinite;
+  }
+
+  /* Progress bar customization */
+  .progress-bar {
+    @apply bg-gray-700 rounded-full h-2;
+  }
+
+  .progress-bar .progress-fill {
+    @apply h-2 rounded-full transition-all duration-300;
+  }
+}
+
+/* Scrollbar customization */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--accent));
+}
